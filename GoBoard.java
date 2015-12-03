@@ -14,11 +14,6 @@ public class GoBoard {
     private ArrayList<GoStone> capturedBlack; 
     private ArrayList<GoStone> capturedWhite; 
 
-    GoBoard() {
-        // call the other constructor with board size of 9x9
-        this(9);
-    }
-
     GoBoard(int size) {
         boardSize   = size;
         boardPoints = new GoStone[size][size];
@@ -112,28 +107,24 @@ public class GoBoard {
     //
 
     public void checkIfCaptured(GoStone stone) {
-        // Keep track of which stones have already been considered
-
-        ArrayList<GoStone> alreadyHandled = new ArrayList<GoStone>();
-
         if (stone.alreadyCaptured()) {
             // Already captured, probably part of a group that was just captured
             return;
         }
 
-       // First get the entire group of stones connected to this stone
-        ArrayList<GoStone> stoneGroup = getGroup(stone, alreadyHandled);
+        // First get the entire group of stones connected to this stone
+        ArrayList<GoStone> stoneGroup = getGroup(stone);
 
-       // Then check whether group is dead (has no liberties), and if so, remove
-       // the entire group 
+        // Then check whether group is dead (has no liberties), and if so, remove
+        // the entire group 
 
-       if ( isGroupDead(stoneGroup) ) {
-           // inform user, list dead stones, wait for "ok" to proceed
-           informUserOfDeadGroup(stoneGroup);  
+        if ( isGroupDead(stoneGroup) ) {
+            // inform user, list dead stones, wait for "ok" to proceed
+            informUserOfDeadGroup(stoneGroup);  
 
-           // Move captured stones to opponent's captured stones
-           captureDeadStones(stoneGroup);    
-       } 
+            // Move captured stones to opponent's captured stones
+            captureDeadStones(stoneGroup);    
+        } 
     }
 
     //
@@ -163,19 +154,19 @@ public class GoBoard {
     }
 
     private void captureDeadStones(ArrayList<GoStone> stones) {
+	GoStone stone;
+
         for (int i = 0; i < stones.size(); i++) {
-            captureDeadStone(stones.get(i));
-        }
-    }
+	    stone = stones.get(i);
 
-    private void captureDeadStone(GoStone stone) {
-        boardPoints[stone.x()][stone.y()] = null;
-        stone.captured();  // just erases board location
+            boardPoints[stone.x()][stone.y()] = null;
+            stone.captured();  // just erases board location
 
-        if (stone.color() == 0) {
-            capturedBlack.add(stone);
-        } else {
-            capturedWhite.add(stone);
+            if (stone.color() == 0) {
+                capturedBlack.add(stone);
+            } else {
+                capturedWhite.add(stone);
+            }
         }
     }
 
@@ -206,29 +197,15 @@ public class GoBoard {
         else               { return false; }        
     }
 
-    private ArrayList<GoStone> getGroup(GoStone startingStone, ArrayList<GoStone> alreadyHandled) {
-        ArrayList<GoStone> stoneGroup = new ArrayList<GoStone>();
-        stoneGroup.add(startingStone);
-        alreadyHandled.add(startingStone);
+    private GoStone getStoneOfColor(int x, int y, int color) {
+       GoStone stone = getStone(x, y);
+       if (stone == null)          { return null; }
 
-        ArrayList<GoStone> neighbors = getNewNeighbors(startingStone, startingStone.color(), alreadyHandled);
+       // if not the right color, then skip it
+       if (stone.color() != color) { return null; }
 
-        for (int i = 0; i < neighbors.size(); i++) {
-            // Recursive call to get this neighbor's group (skipping over
-            // stones that have already been handled, such as the current stone)
-            ArrayList<GoStone> newStones = getGroup(neighbors.get(i), alreadyHandled);
-
-            // add this neighbor's group to the stoneGroup
-            for (int j = 0; j < newStones.size(); j++) {
-                if ( !stoneGroup.contains(newStones.get(j)) ) {
-                    stoneGroup.add(newStones.get(j));
-                    alreadyHandled.add(newStones.get(j));
-                }
-            }
-        }
-
-        return stoneGroup;
-    }
+       return stone;
+   }
 
     private ArrayList<GoStone> getNeighbors(GoStone stone, int color) {
         ArrayList<GoStone> neighbors = new ArrayList<GoStone>();
@@ -249,30 +226,65 @@ public class GoBoard {
         return neighbors;
     }
 
-    private GoStone getStoneOfColor(int x, int y, int color) {
-       GoStone stone = getStone(x, y);
-       if (stone == null)          { return null; }
+    //
+    // getGroup() method, to compute a connected group of stones
+    //
 
-       // if not the right color, then skip it
-       if (stone.color() != color) { return null; }
+    private ArrayList<GoStone> getGroup(GoStone startingStone) {
+	// Private array used by getGroup to keep track of which stones have already been
+	// considered by the getGroup algorithm
+	ArrayList<GoStone> alreadyHandled = new ArrayList<GoStone>();
 
-       return stone;
-   }
+	return doGetGroup(startingStone, alreadyHandled);
+    }
 
-    private ArrayList<GoStone> getNewNeighbors(GoStone stone, int color, ArrayList<GoStone> alreadyHandled) {
-        ArrayList<GoStone> neighbors  = getNeighbors(stone, color);
-        ArrayList<GoStone> resultList = new ArrayList<GoStone>();
+    // doGetGroup(), the main workhorse for getGroup() a recursive
+    // method to compute the total stone group
 
-        GoStone nbr;
+    private ArrayList<GoStone> doGetGroup(GoStone startingStone, ArrayList<GoStone> alreadyHandled) {
+        ArrayList<GoStone> stoneGroup = new ArrayList<GoStone>();
+
+	//
+	// Add this first stone to the stone group
+	//
+
+        stoneGroup.add(startingStone);
+        alreadyHandled.add(startingStone);
+
+        ArrayList<GoStone> neighbors = getNeighbors(startingStone, startingStone.color());
+
+	//
+	// Only use the "new" neighbors (those neighbors that haven't already been handled)
+	//
+
+        ArrayList<GoStone> newNeighbors = new ArrayList<GoStone>();
 
         for (int i = 0; i < neighbors.size(); i++) {
-            nbr = neighbors.get(i);
-            if ( !alreadyHandled.contains(nbr) ) {
-                resultList.add(nbr);
+            if ( !alreadyHandled.contains(neighbors.get(i)) ) {
+                newNeighbors.add(neighbors.get(i));
             }
         }
 
-        return resultList;
+	//
+	// For each new neighbor, call doGetGroup() recursively to get the group starting
+	// from that neighbor, and add that group to this stone group
+	//
+
+        for (int i = 0; i < newNeighbors.size(); i++) {
+            // Recursive call to get this neighbor's group (skipping over
+            // stones that have already been handled, such as the current stone)
+            ArrayList<GoStone> newStones = doGetGroup(newNeighbors.get(i), alreadyHandled);
+
+            // add this neighbor's group to the stoneGroup
+            for (int j = 0; j < newStones.size(); j++) {
+                if ( !stoneGroup.contains(newStones.get(j)) ) {
+                    stoneGroup.add(newStones.get(j));
+                    alreadyHandled.add(newStones.get(j));
+                }
+            }
+        }
+
+        return stoneGroup;
     }
    
 }
