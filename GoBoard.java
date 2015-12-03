@@ -108,7 +108,7 @@ public class GoBoard {
 
     ////////////////////////////////////////////////////////////////////////////////
     //
-    // Following methods handle determining groups and captured stones 
+    // The remaining methods below handle determining groups and captured stones 
     //
 
     public void checkIfCaptured(GoStone stone) {

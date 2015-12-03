@@ -1,8 +1,8 @@
-### Checking out the code
+### Getting the code
 
 ```git clone  https://github.com/davebeyer/simplego```
 
-If needed, [here](http://git-scm.com/download/mac) is Git download for OS-X.
+If needed, [here](http://git-scm.com/download/mac) is the "git" download for OS-X.
 
 ### Compile
 
