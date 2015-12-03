@@ -243,21 +243,20 @@ public class GoBoard {
     // method to compute the complete stone group
 
     private void doGetGroup(GoStone stone, ArrayList<GoStone> stoneGroup) {
-        if (stoneGroup.contains(stone)) {
-            // This stone has already been handled, so just return
-            return;
-        }
-
         // Add this stone  to the stone group
         stoneGroup.add(stone);
 
         ArrayList<GoStone> neighbors = getNeighbors(stone, stone.color());
 
-        // For each neighbor, call doGetGroup() recursively to get the
-        // stone group starting from that neighbor
+        // For each neighbor (that hasn't already been handled), call
+        // doGetGroup() recursively to get the stone group starting
+        // from that neighbor
 
         for (int i = 0; i < neighbors.size(); i++) {
-            doGetGroup(neighbors.get(i), stoneGroup);
+            if ( !stoneGroup.contains(neighbors.get(i)) ) {
+                // This neighbor stone has not already been handled
+                doGetGroup(neighbors.get(i), stoneGroup);
+            }
         }
     }
    
