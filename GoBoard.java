@@ -231,8 +231,9 @@ public class GoBoard {
     //
 
     private ArrayList<GoStone> getGroup(GoStone startingStone) {
-	// Private array used by getGroup to keep track of which stones have already been
-	// considered by the getGroup algorithm
+	// alreadyHandled Keeps track of which stones have already been
+	// considered in doGetGroup(), so they can be skipped over if encountered
+	// again when computing a group
 	ArrayList<GoStone> alreadyHandled = new ArrayList<GoStone>();
 
 	return doGetGroup(startingStone, alreadyHandled);
